@@ -25,9 +25,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Serve static files from the current directory (for development)
-// This should come AFTER specific routes
-app.use(express.static(__dirname));
+// Serve static files - production build or development files
+if (process.env.NODE_ENV === 'production') {
+    // Serve built frontend from dist folder
+    app.use(express.static(path.join(__dirname, 'dist')));
+} else {
+    // Serve static files from current directory (for development)
+    app.use(express.static(__dirname));
+}
 
 // Handle other routes (for room links)
 app.get('*', (req, res) => {

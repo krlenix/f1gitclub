@@ -67,8 +67,8 @@ const App: React.FC = () => {
     // Connect to the WebSocket server.
     // Use environment-based URL for development vs production
     const SERVER_URL = process.env.NODE_ENV === 'production' 
-      ? window.location.origin 
-      : "http://localhost:3001";
+      ? window.location.origin // Railway serves both frontend and backend from same URL
+      : "http://localhost:3004";
     const newSocket = io(SERVER_URL);
     setSocket(newSocket);
 
