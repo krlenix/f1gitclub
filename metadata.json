@@ -1,0 +1,5 @@
+{
+  "name": "Stickman Battle Online",
+  "description": "An online multiplayer stickman fighting game with customizable teams. Create a room, share a link, and battle friends in a 2.5D isometric arena.",
+  "requestFramePermissions": []
+}
