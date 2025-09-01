@@ -9,7 +9,7 @@
     "dev": "vite",
     "preview": "vite preview",
     "railway:build": "npm run build",
-    "railway:start": "NODE_ENV=production node server.js"
+    "railway:start": "npm run build && echo 'Build complete, starting server...' && NODE_ENV=production node server.js"
   },
   "author": "",
   "license": "ISC",

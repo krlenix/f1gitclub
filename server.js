@@ -23,14 +23,21 @@ app.get('/simple', (req, res) => {
 const fs = require('fs');
 
 // Check if dist folder exists (for production builds)
-const distExists = fs.existsSync(path.join(__dirname, 'dist'));
-const indexPath = distExists ? path.join(__dirname, 'dist', 'index.html') : path.join(__dirname, 'index.html');
+const distPath = path.join(__dirname, 'dist');
+const distIndexPath = path.join(distPath, 'index.html');
+const rootIndexPath = path.join(__dirname, 'index.html');
 
+const distExists = fs.existsSync(distPath) && fs.existsSync(distIndexPath);
+const indexPath = distExists ? distIndexPath : rootIndexPath;
+
+console.log(`📁 Dist folder exists: ${fs.existsSync(distPath)}`);
+console.log(`📁 Dist index.html exists: ${fs.existsSync(distIndexPath)}`);
 console.log(`📁 Serving files from: ${distExists ? 'dist folder (production)' : 'root folder (development)'}`);
+console.log(`📁 Index file path: ${indexPath}`);
 
 // Serve static files
 if (distExists) {
-    app.use(express.static(path.join(__dirname, 'dist')));
+    app.use(express.static(distPath));
 } else {
     app.use(express.static(__dirname));
 }
