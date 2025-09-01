@@ -408,6 +408,7 @@ function runGameLoopForRoom(roomId) {
         }
     });
 
+    
     // Apply Damage & Kills
     room.stickmen.forEach(s => {
         const damage = damageToApply.get(s.id);
