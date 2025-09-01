@@ -41,8 +41,8 @@ export const PLAYER_CONTROLS: { [key: string]: PlayerControls } = {
         down: 's',
         left: 'a',
         right: 'd',
-        jump: ' ',
-        attack: 'f',
+        jump: 'Enter',
+        attack: ' ',
     },
     player2: {
         up: 'ArrowUp',
@@ -50,6 +50,6 @@ export const PLAYER_CONTROLS: { [key: string]: PlayerControls } = {
         left: 'ArrowLeft',
         right: 'ArrowRight',
         jump: 'Enter',
-        attack: 'Shift',
+        attack: ' ',
     }
 };

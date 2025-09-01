@@ -47,8 +47,8 @@ const JUMP_FORCE = 12;
 const MOVE_SPEED = 3;
 const STICKMAN_HEALTH = 200; // More health so players need more hits to die
 const STICKMAN_MAX_MANA = 100;
-const ATTACK_MANA_COST = 35;
-const MANA_REGEN_RATE = 0.5;
+const ATTACK_MANA_COST = 20;
+const MANA_REGEN_RATE = 1.0;
 const STICKMAN_RADIUS = 10;
 const ATTACK_RANGE = 60;
 const ATTACK_DAMAGE = 10;
@@ -58,7 +58,7 @@ const HIT_DURATION = 10;
 const OBSTACLE_COUNT = 0;
 const OBSTACLE_MIN_SIZE = 20;
 const OBSTACLE_MAX_SIZE = 70;
-const HAMMER_SPAWN_INTERVAL = 900; // 15 seconds at 60fps
+const HAMMER_SPAWN_INTERVAL = 300; // 5 seconds at 60fps
 const HAMMER_DURATION = 600; // 10 seconds at 60fps
 const HAMMER_DAMAGE_MULTIPLIER = 2.5;
 const POWERUP_PICKUP_RADIUS = 25;
@@ -66,7 +66,7 @@ const GROUND_WIDTH = 500;
 const GROUND_DEPTH = 500;
 
 const PLAYER_CONTROLS = {
-    player1: { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright', jump: 'enter', attack: ' ' },
+    player1: { up: 'w', down: 's', left: 'a', right: 'd', jump: 'enter', attack: ' ' },
     player2: { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright', jump: 'enter', attack: ' ' }
 };
 

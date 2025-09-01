@@ -268,8 +268,7 @@ const App: React.FC = () => {
                 </div>
             )}
              <div className="mt-8 text-gray-400 text-sm">
-                <p><span className="font-bold text-white">Player 1 Controls:</span> W/A/S/D (Move), Space (Jump), F (Attack)</p>
-                <p><span className="font-bold text-white">Player 2 Controls:</span> Arrow Keys (Move), Enter (Jump), Shift (Attack)</p>
+                <p><span className="font-bold text-white">Controls for All Players:</span> W/A/S/D or Arrow Keys (Move), Enter (Jump), Space (Attack)</p>
             </div>
           </div>
         );
