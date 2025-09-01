@@ -59,6 +59,8 @@ const App: React.FC = () => {
   const [powerUp, setPowerUp] = useState<PowerUp | null>(null);
   const [myPlayerId, setMyPlayerId] = useState<number | null>(null);
   const [socket, setSocket] = useState<any | null>(null); // Using 'any' for socket.io client
+  const [roundScores, setRoundScores] = useState<{ teamA: number, teamB: number }>({ teamA: 0, teamB: 0 });
+  const [roundWinner, setRoundWinner] = useState<Team | null>(null);
 
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const attackKeysToProcess = useRef<Set<string>>(new Set());
@@ -99,6 +101,12 @@ const App: React.FC = () => {
         setCountdown(payload.countdown);
         setWinner(payload.winner);
         setTeams(payload.teams);
+        if (payload.roundScores) {
+            setRoundScores(payload.roundScores);
+        }
+        if (payload.roundWinner !== undefined) {
+            setRoundWinner(payload.roundWinner);
+        }
     });
 
     socket.on('playerAssigned', (payload: PlayerAssignedPayload) => {
@@ -236,9 +244,32 @@ const App: React.FC = () => {
       case GameState.Countdown:
         const lobbyUrl = `${window.location.origin}${window.location.pathname}?roomId=${roomId}`;
         const hasJoined = myPlayerId !== null;
+        
+        // Check if this is between rounds (has round scores)
+        const isBetweenRounds = roundScores.teamA > 0 || roundScores.teamB > 0;
+        
         return (
           <div className="text-center bg-gray-800 bg-opacity-90 p-10 rounded-lg shadow-xl backdrop-blur-sm w-full max-w-4xl">
-            <h1 className="text-5xl font-bold text-white mb-2 tracking-wider">BATTLE LOBBY</h1>
+            <h1 className="text-5xl font-bold text-white mb-2 tracking-wider">
+              {isBetweenRounds ? 'NEXT ROUND' : 'BATTLE LOBBY'}
+            </h1>
+            
+            {/* Show round scores if between rounds */}
+            {isBetweenRounds && (
+              <div className="mb-6">
+                <div className="text-3xl font-bold mb-2">
+                  <span style={{color: teams.teamA.color}}>{teams.teamA.name}: {roundScores.teamA}</span>
+                  <span className="text-gray-400 mx-4">-</span>
+                  <span style={{color: teams.teamB.color}}>{teams.teamB.name}: {roundScores.teamB}</span>
+                </div>
+                {roundWinner && (
+                  <p className="text-2xl mb-4" style={{color: roundWinner.color}}>
+                    🏆 {roundWinner.name} won the round!
+                  </p>
+                )}
+                <p className="text-gray-300">First to 3 rounds wins the match!</p>
+              </div>
+            )}
             {roomId && (
                 <div className="mb-4">
                     <p className="text-gray-300">Share this link with a friend:</p>
@@ -276,13 +307,24 @@ const App: React.FC = () => {
         return (
           <div className="text-center bg-gray-800 bg-opacity-80 p-10 rounded-lg shadow-xl backdrop-blur-sm">
             {winner ? (
-              <h1 className={`text-6xl font-bold mb-4`} style={{ color: winner.color }}>{winner.name} Wins!</h1>
+              <h1 className={`text-6xl font-bold mb-4`} style={{ color: winner.color }}>🏆 {winner.name} Wins the Match!</h1>
             ) : (
-              <h1 className="text-6xl font-bold mb-4 text-white">It's a Draw!</h1>
+              <h1 className="text-6xl font-bold mb-4 text-white">Match Draw!</h1>
             )}
-            <p className="text-2xl text-gray-300 mb-8">Final Kills - {teams.teamA.name}: {scores.teamA} | {teams.teamB.name}: {scores.teamB}</p>
+            
+            {/* Show final match scores */}
+            <div className="mb-6">
+              <p className="text-3xl font-bold mb-2">Final Score</p>
+              <div className="text-4xl font-bold">
+                <span style={{color: teams.teamA.color}}>{teams.teamA.name}: {roundScores.teamA}</span>
+                <span className="text-gray-400 mx-4">-</span>
+                <span style={{color: teams.teamB.color}}>{teams.teamB.name}: {roundScores.teamB}</span>
+              </div>
+            </div>
+            
+            <p className="text-xl text-gray-300 mb-8">Total Kills This Match - {teams.teamA.name}: {scores.teamA} | {teams.teamB.name}: {scores.teamB}</p>
             <button onClick={resetGame} className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-4 px-8 rounded-lg text-xl transition-transform transform hover:scale-105">
-              Play Again
+              New Match
             </button>
           </div>
         );
@@ -300,12 +342,23 @@ const App: React.FC = () => {
           </div>
         )}
         {gameState === GameState.Playing && (
-          <div className="z-10 absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-40 rounded-t-lg flex justify-between items-center">
-              <div className="text-3xl font-extrabold flex items-center gap-6">
-                 <span style={{color: teams.teamA.color}}>{teams.teamA.name.toUpperCase()}: {scores.teamA}</span>
-                 <span className="text-gray-400">VS</span>
-                 <span style={{color: teams.teamB.color}}>{teams.teamB.name.toUpperCase()}: {scores.teamB}</span>
+          <div className="z-10 absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-40 rounded-t-lg">
+            {/* Round Scores */}
+            <div className="text-center mb-2">
+              <div className="text-2xl font-bold">
+                <span style={{color: teams.teamA.color}}>{teams.teamA.name}: {roundScores.teamA}</span>
+                <span className="text-gray-400 mx-3">-</span>
+                <span style={{color: teams.teamB.color}}>{teams.teamB.name}: {roundScores.teamB}</span>
               </div>
+              <p className="text-sm text-gray-300">Rounds (First to 3 wins)</p>
+            </div>
+            
+            {/* Kill Scores */}
+            <div className="text-xl font-bold flex items-center justify-center gap-6">
+               <span style={{color: teams.teamA.color}}>Kills: {scores.teamA}</span>
+               <span className="text-gray-400">VS</span>
+               <span style={{color: teams.teamB.color}}>Kills: {scores.teamB}</span>
+            </div>
           </div>
         )}
         <GameCanvas stickmen={stickmen} teams={teams} obstacles={obstacles} powerUp={powerUp} />

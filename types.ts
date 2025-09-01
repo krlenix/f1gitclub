@@ -79,6 +79,8 @@ export interface GameSyncPayload {
   countdown: number;
   winner: Team | null;
   teams: { teamA: Team, teamB: Team };
+  roundScores?: { teamA: number, teamB: number };
+  roundWinner?: Team | null;
 }
 
 export interface JoinRequestPayload {

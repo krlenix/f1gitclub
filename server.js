@@ -370,9 +370,14 @@ function runGameLoopForRoom(roomId) {
             }
         }); 
 
-        // Power-up pickup check
-        if (room.powerUp?.isVisible && Math.sqrt(Math.pow(s.x - room.powerUp.x, 2) + Math.pow(s.y - room.powerUp.y, 2)) < POWERUP_PICKUP_RADIUS) {
-            powerUpPickedUpBy = s.id;
+        // Power-up pickup check - use feet position (z=0) instead of head position
+        if (room.powerUp?.isVisible) {
+            // Calculate distance using feet position (z=0 for ground level)
+            const feetDistance = Math.sqrt(Math.pow(s.x - room.powerUp.x, 2) + Math.pow(s.y - room.powerUp.y, 2));
+            if (feetDistance < POWERUP_PICKUP_RADIUS) {
+                powerUpPickedUpBy = s.id;
+                console.log(`🔨 Player ${s.id} picked up hammer! Distance: ${feetDistance.toFixed(1)}`);
+            }
         }
     });
 
@@ -428,14 +433,77 @@ function runGameLoopForRoom(roomId) {
         room.stickmen.forEach(s => { if (s.id === kill.attackerId) s.kills++; });
     });
 
-    // Check for game over
+    // Check for round over
     const aliveTeamA = room.stickmen.some(s => s.teamId === 'teamA' && s.state !== 'dead');
     const aliveTeamB = room.stickmen.some(s => s.teamId === 'teamB' && s.state !== 'dead');
     if (!aliveTeamA || !aliveTeamB) {
-        room.gameState = GameState.GameOver;
-        room.winner = aliveTeamA ? room.teams.teamA : (aliveTeamB ? room.teams.teamB : null);
-        clearInterval(room.gameLoopInterval);
-        room.gameLoopInterval = null;
+        // Determine round winner
+        const roundWinner = aliveTeamA ? 'teamA' : (aliveTeamB ? 'teamB' : null);
+        
+        // Update round scores
+        if (roundWinner) {
+            room.roundScores[roundWinner]++;
+            console.log(`🏆 Round won by ${roundWinner}! Scores: TeamA=${room.roundScores.teamA}, TeamB=${room.roundScores.teamB}`);
+        }
+        
+        // Check if match is over (first to 3 wins)
+        const maxScore = Math.max(room.roundScores.teamA, room.roundScores.teamB);
+        if (maxScore >= 3) {
+            // Match over - determine overall winner
+            room.gameState = GameState.GameOver;
+            if (room.roundScores.teamA > room.roundScores.teamB) {
+                room.winner = room.teams.teamA;
+            } else if (room.roundScores.teamB > room.roundScores.teamA) {
+                room.winner = room.teams.teamB;
+            } else {
+                room.winner = null; // Tie
+            }
+            clearInterval(room.gameLoopInterval);
+            room.gameLoopInterval = null;
+            console.log(`🎉 MATCH OVER! Winner: ${room.winner?.name || 'TIE'}`);
+        } else {
+            // Round over, but match continues - start new round after delay
+            room.gameState = GameState.Countdown;
+            room.countdown = 3; // Shorter countdown between rounds
+            room.roundWinner = roundWinner ? room.teams[roundWinner] : null;
+            
+            clearInterval(room.gameLoopInterval);
+            room.gameLoopInterval = null;
+            
+            // Start new round countdown
+            setTimeout(() => {
+                if (room.gameState === GameState.Countdown) {
+                    const countdownInterval = setInterval(() => {
+                        room.countdown--;
+                        io.to(roomId).emit('gameStateSync', room);
+                        if (room.countdown <= 0) {
+                            clearInterval(countdownInterval);
+                            // Reset players for new round
+                            room.stickmen.forEach(s => {
+                                const spawnPos = findSafeSpawnPosition(s.teamId, room.obstacles);
+                                s.x = spawnPos.x;
+                                s.y = spawnPos.y;
+                                s.z = 0;
+                                s.vx = 0; s.vy = 0; s.vz = 0;
+                                s.health = STICKMAN_HEALTH;
+                                s.mana = STICKMAN_MAX_MANA;
+                                s.state = 'idle';
+                                s.attackTimer = 0;
+                                s.hitTimer = 0;
+                                s.powerUp = null;
+                                s.powerUpTimer = 0;
+                            });
+                            room.powerUp = null;
+                            room.hammerSpawnTimer = HAMMER_SPAWN_INTERVAL;
+                            room.roundWinner = null;
+                            room.gameState = GameState.Playing;
+                            room.gameLoopInterval = setInterval(() => runGameLoopForRoom(roomId), 1000 / 60);
+                            console.log(`🔄 New round started! Current scores: TeamA=${room.roundScores.teamA}, TeamB=${room.roundScores.teamB}`);
+                        }
+                    }, 1000);
+                }
+            }, 2000); // 2 second delay before countdown starts
+        }
     }
 
     // Debug: Log attacking players before sending state
@@ -467,6 +535,8 @@ io.on('connection', (socket) => {
             gameLoopInterval: null,
             hammerSpawnTimer: HAMMER_SPAWN_INTERVAL,
             nextPlayerId: 0,
+            roundScores: { teamA: 0, teamB: 0 }, // Track round wins
+            roundWinner: null, // Winner of current round
         };
         socket.emit('roomCreated', roomId);
     });
@@ -508,7 +578,7 @@ io.on('connection', (socket) => {
             const countdownInterval = setInterval(() => {
                 room.countdown--;
                 io.to(roomId).emit('gameStateSync', room);
-                if (room.countdown < 0) {
+                if (room.countdown <= 0) {
                     clearInterval(countdownInterval);
                     room.gameState = GameState.Playing;
                     room.gameLoopInterval = setInterval(() => runGameLoopForRoom(roomId), 1000 / 60);
