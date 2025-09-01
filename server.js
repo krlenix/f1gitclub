@@ -20,17 +20,29 @@ app.get('/simple', (req, res) => {
     res.sendFile(path.join(__dirname, 'simple-game.html'));
 });
 
-// Serve static files from dist folder (built files)
-app.use(express.static(path.join(__dirname, 'dist')));
+const fs = require('fs');
+
+// Check if dist folder exists (for production builds)
+const distExists = fs.existsSync(path.join(__dirname, 'dist'));
+const indexPath = distExists ? path.join(__dirname, 'dist', 'index.html') : path.join(__dirname, 'index.html');
+
+console.log(`📁 Serving files from: ${distExists ? 'dist folder (production)' : 'root folder (development)'}`);
+
+// Serve static files
+if (distExists) {
+    app.use(express.static(path.join(__dirname, 'dist')));
+} else {
+    app.use(express.static(__dirname));
+}
 
 // Serve the main HTML file for the root route
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(indexPath);
 });
 
-// Handle other routes (for room links) - serve the built index.html
+// Handle other routes (for room links)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(indexPath);
 });
 
 const server = http.createServer(app);
