@@ -9,12 +9,11 @@ interface GameCanvasProps {
   powerUp: PowerUp | null;
 }
 
-// Function to project 3D world coordinates to 2D screen coordinates
+// Function to project 3D world coordinates to 2D screen coordinates (isometric)
 const worldToScreen = (x: number, y: number, z: number) => {
-  // TEMPORARY: Direct 1:1 mapping to test diagonal movement
-  // This should show perfect diagonal movement if server is working
-  const screenX = x + CANVAS_WIDTH / 2;
-  const screenY = y - z + CANVAS_HEIGHT / 2.5;
+  // Proper isometric projection at 45 degrees
+  const screenX = (x - y) * Math.cos(Math.PI / 6) + CANVAS_WIDTH / 2;
+  const screenY = (x + y) * Math.sin(Math.PI / 6) - z + CANVAS_HEIGHT / 2.5;
   
   return { x: screenX, y: screenY };
 };

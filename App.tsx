@@ -8,50 +8,7 @@ import GameCanvas from './components/GameCanvas';
 // FIX: Make io available in the component from the global scope.
 declare const io: any;
 
-// Add error boundary to catch and display errors
-class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error?: Error}> {
-  constructor(props: {children: React.ReactNode}) {
-    super(props);
-    this.state = { hasError: false };
-  }
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.error('App Error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-          <div className="text-center p-8">
-            <h1 className="text-4xl font-bold mb-4">Something went wrong</h1>
-            <p className="text-gray-300 mb-4">Please refresh the page to try again</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold"
-            >
-              Refresh Page
-            </button>
-            {this.state.error && (
-              <details className="mt-4 text-left">
-                <summary className="cursor-pointer text-red-400">Error Details</summary>
-                <pre className="mt-2 p-4 bg-gray-800 rounded text-sm overflow-auto">
-                  {this.state.error.toString()}
-                </pre>
-              </details>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 // --- Helper Components ---
 const TeamCustomizer: React.FC<{ team: Team, setTeam: (team: Team) => void, defaultColor: string }> = ({ team, setTeam, defaultColor }) => {
@@ -109,24 +66,12 @@ const App: React.FC = () => {
 
   // --- Game Setup & Room Logic (Multiplayer) ---
   useEffect(() => {
-    // Check if socket.io is available
-    if (typeof io === 'undefined') {
-      console.error('Socket.io not loaded! Make sure the CDN script is loaded.');
-      return;
-    }
-
     // Connect to the WebSocket server.
     // Use environment-based URL for development vs production
     const SERVER_URL = process.env.NODE_ENV === 'production' 
       ? window.location.origin // Railway serves both frontend and backend from same URL
       : "http://localhost:3004";
-    
-    console.log('Connecting to server:', SERVER_URL);
-    const newSocket = io(SERVER_URL, {
-      transports: ['websocket', 'polling'], // Allow both transport methods
-      timeout: 20000,
-      forceNew: true
-    });
+    const newSocket = io(SERVER_URL);
     setSocket(newSocket);
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -369,13 +314,4 @@ const App: React.FC = () => {
     </div>
   );
 };
-// Wrap App with ErrorBoundary
-const AppWithErrorBoundary: React.FC = () => {
-  return (
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  );
-};
-
-export default AppWithErrorBoundary;
+export default App;
